@@ -1,6 +1,6 @@
 var http = require("http");
 var hostname = "127.0.0.1";
-var port = "8080";
+var port = 8080;
 
 const server = http.createServer(function (req, res) {
   const path = req.url;
@@ -8,14 +8,20 @@ const server = http.createServer(function (req, res) {
   if (path === "/products") {
     if (method === "GET") {
       res.writeHead(200, { "Content-Type": "application/json" });
-      const products = JSON.stringify([{ name: "배변패드", price: 50000 }]);
+      const products = JSON.stringify([
+        {
+          name: "배변패드",
+          price: 50000,
+        },
+      ]);
       res.end(products);
     } else if (method === "POST") {
-      res.end("POST 성공");
+      res.end("생성되었습니다!");
     }
-    res.end("안녕히 가세요");
   }
+  res.end("Good Bye");
 });
 
 server.listen(port, hostname);
-console.log("mangoShop server on");
+
+console.log("mangoshop server on!");
