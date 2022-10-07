@@ -2,21 +2,49 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const models = require("./models");
-const port = 8080;
+const multer = require("multer");
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, "uploads");
+    },
+    filename: function (req, file, cb) {
+      cb(null, file.originalname);
+    },
+  }),
+});
 
+const port = process.env.PORT||8080; // ||(or):조건부연산자
 app.use(express.json());
 app.use(cors());
+app.use("/uploads", express.static("uploads"));
+
+app.get("/banners", (req, res) => {
+  models.Banner.findAll({ limit: 2 })
+    .then((result) => {
+      res.send({
+        banners: result,
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send("에러가 발생했습니다.");
+    });
+});
 
 app.get("/products", (req, res) => {
-  models.Product.findAll(
-  )
+  models.Product.findAll({
+    order: [["createdAt", "DESC"]], //ASC
+    attributes: ["id", "name", "price", "seller", "description", "imageUrl", "createdAt"],
+  })
     .then((result) => {
       res.send({
         product: result,
       });
     })
     .catch((error) => {
-      console.log("에러발생");
+      console.error(error);
+      res.status(400).send("에러 발생");
     });
 });
 
@@ -31,30 +59,38 @@ app.get("/products/:id", (req, res) => {
       res.send({ product: result });
     })
     .catch((error) => {
-      console.log();
+      console.error();
       res.send("상품 조회 시 에러가 발생했습니다.");
     });
+});
+
+app.post("/image", upload.single("image"), function (req, res) {
+  const file = req.file;
+  console.log(file);
+  res.send({
+    imageUrl: file.path,
+  });
 });
 
 app.post("/products", (req, res) => {
   const body = req.body;
   const { name, price, seller, description, imageUrl } = body;
-  if (!name || !price || !seller || !description || imageUrl) {
+  if (!name || !price || !seller || !description) {
     res.send("모든 필드를 입력해 주세요.");
   }
   models.Product.create({ name, price, seller, description, imageUrl })
     .then((result) => {
-      console.log("상품생성결과", result);
+      console.log("상품 생성 결과", result);
       res.send({ result });
     })
     .catch((error) => {
       console.error(error);
-      res.send("상품 업로드에 문제가 발생하였습니다.");
+      res.status(400).send("상품 업로드에 문제가 발생하였습니다.");
     });
 });
 
 app.post("/login", (req, res) => {
-  res.send("로그인해 주세요.");
+  res.send("로그인해 주세요");
 });
 
 app.listen(port, () => {
@@ -62,11 +98,11 @@ app.listen(port, () => {
   models.sequelize
     .sync()
     .then(() => {
-      console.log("💖DB연결성공");
+      console.log("💖 DB 연결 성공");
     })
     .catch((err) => {
       console.error(err);
-      console.log("💔DB연결실패");
+      console.log("💔 DB 연결 실패");
       process.exit();
     });
 });
